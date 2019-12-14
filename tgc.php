@@ -13,7 +13,7 @@ use \Suin\RSSWriter\Item;
 require('./phpQuery/phpQuery.php');
 
 $username = isset($_GET['username']) ? $_GET['username'] : NULL;
-$count    = isset($_GET['count'])    ? $_GET['count']    : 2;
+$count    = isset($_GET['count'])    ? $_GET['count']    : 1;
 $link_fw  = isset($_GET['link_fw'])  ? $_GET['count']    : FALSE;
 
 if (!$username)
@@ -54,7 +54,11 @@ $errcnt = 0;
 
 request:
 
-$prev_page = "https://t.me" . pq('a.tme_messages_more')->attr('href');
+if (strstr(pq('a.tme_messages_more')->attr('href'), '?before=') != FALSE)
+    $prev_page = "https://t.me" . pq('a.tme_messages_more')->attr('href');
+else
+    $prev_page = FALSE;
+
 foreach ( $msgs = pq('.tgme_container')->find('.tgme_widget_message_wrap') as $msg)
 {
 
@@ -283,9 +287,10 @@ foreach ( $msgs = pq('.tgme_container')->find('.tgme_widget_message_wrap') as $m
 
 }
 
-$count--;
+if (is_numeric($count))
+    $count--;
 
-if ($count > 0)
+if (((is_numeric($count) and $count > 0) or $count == "all") and $prev_page != FALSE)
 {
     curl_setopt($ch, CURLOPT_URL, $prev_page);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
