@@ -14,6 +14,7 @@ require('./phpQuery/phpQuery.php');
 
 $username = isset($_GET['username']) ? $_GET['username'] : NULL;
 $count    = isset($_GET['count'])    ? $_GET['count']    : 2;
+$link_fw  = isset($_GET['link_fw'])  ? $_GET['count']    : FALSE;
 
 if (!$username)
 	return;
@@ -256,10 +257,14 @@ foreach ( $msgs = pq('.tgme_container')->find('.tgme_widget_message_wrap') as $m
 	if ($item_title == "")
 		$item_title = pq('.tgme_widget_message_date > time')->attr('datetime');
 
-//    if (pq('.tgme_widget_message_forwarded_from_name')->attr('href') != "")
-//        $item_guid = str_replace('https://t.me/', '', pq('.tgme_widget_message_forwarded_from_name')->attr('href'));
-//    else
-    $item_guid = pq('.tgme_widget_message')->attr('data-post');
+    if ($link_fw)
+    {
+        if (pq('.tgme_widget_message_forwarded_from_name')->attr('href') != "")
+            $item_guid = str_replace('https://t.me/', '', pq('.tgme_widget_message_forwarded_from_name')->attr('href'));
+        else
+            $item_guid = pq('.tgme_widget_message')->attr('data-post');
+    } else
+        $item_guid = pq('.tgme_widget_message')->attr('data-post') . $checksum;
 
 	$item = new Item();
 	$item
@@ -268,7 +273,7 @@ foreach ( $msgs = pq('.tgme_container')->find('.tgme_widget_message_wrap') as $m
 		->description("$item_body")
 		->url(pq('.tgme_widget_message_date')->attr('href'))
 		->pubDate($item_date)
-		->guid($item_guid . $checksum, false)
+		->guid($item_guid, false)
 		->appendTo($channel);
 
 	preg_match_all('`#\K([^[:blank:],.<"\']+)`', $item_body, $matches);
