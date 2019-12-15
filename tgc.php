@@ -171,11 +171,7 @@ foreach ( $msgs = pq('.tgme_container')->find('.tgme_widget_message_wrap') as $m
 	//////////////////////
 
 	if (pq('div')->hasClass('tgme_widget_message_sticker_wrap'))
-	{
-		$sticker_img = pq('i.tgme_widget_message_sticker')->attr('style');
-		$sticker_img = preg_replace('`.*background-image:url\(\'(.+?)\'\).*`', '<img src="$1" /><br>', $sticker_img);
-		$item_body .= $sticker_img;
-	}
+		$item_body .= pq('.tgme_widget_message_sticker_wrap a')->html();
 
 	if (pq('a')->hasClass('tgme_widget_message_link_preview'))
 	{
