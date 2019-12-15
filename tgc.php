@@ -14,7 +14,7 @@ require('./phpQuery/phpQuery.php');
 
 $username = isset($_GET['username']) ? $_GET['username'] : NULL;
 $count    = isset($_GET['count'])    ? $_GET['count']    : 1;
-$link_fw  = isset($_GET['link_fw'])  ? $_GET['count']    : FALSE;
+$link_fw  = isset($_GET['link_fw'])  ? $_GET['link_fw']  : FALSE;
 
 if (!$username)
 	return;
