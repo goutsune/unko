@@ -22,6 +22,7 @@ if (!$username)
 $ch = curl_init("https://t.me/s/${username}");
 
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
 
 $page = curl_exec($ch);
 if ($page == FALSE)
@@ -30,7 +31,6 @@ if ($page == FALSE)
 $doc  = phpQuery::newDocument($page);
 
 //replace emoji with images with just unicode emoji
-pq('.emoji')->removeAttr('style');
 foreach(pq('')->find('.emoji') as $elem)
     pq($elem)->replaceWith(pq($elem)->text());
 
@@ -273,21 +273,19 @@ foreach ( $msgs = pq('.tgme_container')->find('.tgme_widget_message_wrap') as $m
 
 }
 
-
 if (is_numeric($count))
     $count--;
 
 if (((is_numeric($count) and $count > 0) or $count == "all") and $prev_page != FALSE)
 {
     curl_setopt($ch, CURLOPT_URL, $prev_page);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
 
     $page = curl_exec($ch);
     if ($page != FALSE)
     {
         $doc  = phpQuery::newDocument($page);
         //replace emoji with images with just unicode emoji, again
-        pq('.emoji')->removeAttr('style');
         foreach(pq('')->find('.emoji') as $elem)
             pq($elem)->replaceWith(pq($elem)->text());
         goto request;
