@@ -104,7 +104,11 @@ foreach ( $msgs = pq('.tgme_container')->find('.tgme_widget_message_wrap') as $m
     }
 
     if (pq('a')->hasClass('tgme_widget_message_reply'))
+    {
+        $reply_link = pq('a.tgme_widget_message_reply')->attr('href');
+        pq('.tgme_widget_message_author')->wrapInner("<a href=\"$reply_link\"></a>");
         $item_body .= pq('a.tgme_widget_message_reply')->wrapInner('<blockquote></blockquote>')->html();
+    }
 
     if (pq('div')->hasClass('tgme_widget_message_grouped_layer'))
     {
