@@ -50,8 +50,6 @@ $channel
 	->ttl(30)
 	->appendTo($feed);
 
-$errcnt = 0;
-
 request:
 
 if (strstr(pq('a.tme_messages_more')->attr('href'), '?before=') != FALSE)
@@ -106,12 +104,7 @@ foreach ( $msgs = pq('.tgme_container')->find('.tgme_widget_message_wrap') as $m
     }
 
     if (pq('a')->hasClass('tgme_widget_message_reply'))
-    {
-/*        $thumb_img = pq('i.tgme_widget_message_reply_thumb')->attr('style');
-		$thumb_img = preg_replace('`.*background-image:url\(\'(.+?)\'\).*`', '<img src="$1" />', $thumb_img);
-        pq('.tgme_widget_message_reply_thumb')->replaceWith($thumb_img);*/
         $item_body .= pq('a.tgme_widget_message_reply')->wrapInner('<blockquote></blockquote>')->html();
-    }
 
     if (pq('div')->hasClass('tgme_widget_message_grouped_layer'))
     {
@@ -181,36 +174,33 @@ foreach ( $msgs = pq('.tgme_container')->find('.tgme_widget_message_wrap') as $m
 			$ch = curl_init(pq('a.tgme_widget_message_link_preview')->attr('href'));
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 			curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
 			$tmppage = curl_exec($ch);
-			$tmppage = str_replace('<head>', '<head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>', $tmppage);
-			
-			$tmpdoc = new DOMDocument('1.0');
-			@$tmpdoc->loadHTML($tmppage);
+            if ($tmppage != FALSE)
+            {
+                $tmppage = str_replace('<head>', '<head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>', $tmppage);
+                
+                $tmpdoc = new DOMDocument('1.0');
+                @$tmpdoc->loadHTML($tmppage);
 
-			if ($tmpdoc->getElementById('tl_article_header')->lastChild != null)
-				$tmpdoc->getElementById('tl_article_header')->removeChild($tmpdoc->getElementById('tl_article_header')->lastChild);
-			if ($tmpdoc->getElementById('_tl_editor')->childNodes != null)
-				$tmpdoc->getElementById('_tl_editor')->removeChild($tmpdoc->getElementById('_tl_editor')->childNodes->item(0));
+                if ($tmpdoc->getElementById('tl_article_header')->lastChild != null)
+                    $tmpdoc->getElementById('tl_article_header')->removeChild($tmpdoc->getElementById('tl_article_header')->lastChild);
+                if ($tmpdoc->getElementById('_tl_editor')->childNodes != null)
+                    $tmpdoc->getElementById('_tl_editor')->removeChild($tmpdoc->getElementById('_tl_editor')->childNodes->item(0));
 
-			
-			foreach ($tmpdoc->getElementsByTagName('img') as $image)
-				if ($image->getAttribute('src')[0] == '/')
-					$image->setAttribute('src', 'https://telegra.ph' . $image->getAttribute('src'));
-			
-			$item_body .= '<hr/>' . $tmpdoc->saveHTML($tmpdoc->getElementsByTagName('header')->item(0))
-                                  . $tmpdoc->saveHTML($tmpdoc->getElementsByTagName('article')->item(0));
+                
+                foreach ($tmpdoc->getElementsByTagName('img') as $image)
+                    if ($image->getAttribute('src')[0] == '/')
+                        $image->setAttribute('src', 'https://telegra.ph' . $image->getAttribute('src'));
+                
+                $item_body .= '<hr/>' . $tmpdoc->saveHTML($tmpdoc->getElementsByTagName('header')->item(0))
+                                      . $tmpdoc->saveHTML($tmpdoc->getElementsByTagName('article')->item(0));
+            }
 		}
 		else
 		{
 			if (pq('div')->hasClass('link_preview_video_wrap'))
 				pq('div.link_preview_video_wrap')->removeAttr('style');
-	
-/*			if (pq('i')->hasClass('link_preview_image') or pq('i')->hasClass('link_preview_right_image'))
-			{
-				$preview_img = pq('i')->attr('style');
-				$preview_img = preg_replace('`.*background-image:url\(\'(.+?)\'\).*`', '<img src="$1" />', $preview_img);
-				pq('i')->replaceWith($preview_img);
-			}*/
 	
 			if (pq('div')->hasClass('link_preview_embed_wrap'))
 			{
@@ -282,6 +272,7 @@ foreach ( $msgs = pq('.tgme_container')->find('.tgme_widget_message_wrap') as $m
 		$item->category($match);
 
 }
+
 
 if (is_numeric($count))
     $count--;
