@@ -13,7 +13,7 @@ use \Suin\RSSWriter\Item;
 require('./phpQuery/phpQuery.php');
 
 $username = isset($_GET['username']) ? $_GET['username'] : NULL;
-$count    = isset($_GET['count'])    ? $_GET['count']    : 1;
+$count    = isset($_GET['count'])    ? $_GET['count']    : 2;
 $link_fw  = isset($_GET['link_fw'])  ? $_GET['link_fw']  : FALSE;
 
 if (!$username)
@@ -83,7 +83,10 @@ foreach ( $msgs = pq('.tgme_container')->find('.tgme_widget_message_wrap') as $m
 			continue;
 	} else
 
-    $checksum = sprintf('/%08x', crc32(pq('.tgme_widget_message_bubble > div.tgme_widget_message_text')->html()));
+    if (! pq('div')->hasClass('tgme_widget_message_poll_question'))
+        $checksum = sprintf('/%08x', crc32(pq('.tgme_widget_message_bubble > div.tgme_widget_message_text')->html()));
+    else
+        $checksum = '/00000000'; 
 
     $titleprep = pq('.tgme_widget_message_bubble > div.tgme_widget_message_text')->html();
     $titleprep = preg_replace('`<br>`', "\n", $titleprep);
