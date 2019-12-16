@@ -4,11 +4,11 @@ spl_autoload_register(function($c)
 {
 	@include_once strtr($c, '\\_', '//') . '.php';
 });
-set_include_path(get_include_path() . PATH_SEPARATOR . __DIR__ . '/Source');
+set_include_path(get_include_path() . PATH_SEPARATOR . __DIR__);
 
-use \Suin\RSSWriter\Feed;
-use \Suin\RSSWriter\Channel;
-use \Suin\RSSWriter\Item;
+use \RSSWriter\Feed;
+use \RSSWriter\Channel;
+use \RSSWriter\Item;
 
 error_reporting(E_WARNING);
 require_once('./VK/VK.php');
