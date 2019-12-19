@@ -22,6 +22,7 @@ try {
 	$nocopy   = isset($_GET['nocopy'])   ? $_GET['nocopy'] : false;
 	$offset   = isset($_GET['offset'])   ? $_GET['offset'] : 0;
 	$comments = isset($_GET['comments']) ? $_GET['comments'] : false;
+    $watch    = isset($_GET['watch'])    ? $_GET['watch'] : false;
 	
 	$vk = new VK\VK($vk_config['app_id'], $vk_config['api_secret'], $vk_config['access_token']); // Use your app_id and api_secret
     
@@ -148,7 +149,9 @@ try {
 				$rawtext = '<p style="white-space:pre-line;">' . $post['text'] . '</p>';
 			else
 				$rawtext = "";
-			
+
+            $checksum = sprintf('/%08x', crc32($rawtext));
+            
 			$rawtext = preg_replace('`<br>`', '<br/>', $rawtext);
 			$rawtext = preg_replace('`<hr>`', '<hr/>', $rawtext);
 
@@ -294,12 +297,17 @@ try {
 			
 			unset($matches);
 
+            if ($watch)
+                $guid = "{$post['from_id']}_{$post['id']}{$checksum}";
+            else
+                $guid = "{$post['from_id']}_{$post['id']}";
+
 			$item
 				->title($title)
 				->description($description)
 				->url("https://vk.com/wall-{$response['response']['groups'][0]['id']}_{$post['id']}")
 				->pubDate($post['date'])
-				->guid("{$post['from_id']}_{$post['id']}", false)
+				->guid($guid, false)
 				->appendTo($channel);
 			if ($comments)
 				$item -> comments("http://127.0.0.1:9000/comments.php?owner_id=-{$response['response']['groups'][0]['id']}&post_id={$post['id']}");

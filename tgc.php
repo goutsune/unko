@@ -83,10 +83,11 @@ foreach ( $msgs = pq('.tgme_container')->find('.tgme_widget_message_wrap') as $m
 			continue;
 	} else
 
-    if (! pq('div')->hasClass('tgme_widget_message_poll_question'))
-        $checksum = sprintf('/%08x', crc32(pq('.tgme_widget_message_bubble > div.tgme_widget_message_text')->html()));
+    //Avoid calculating checkums for bot-generated messages — polls get updated, text doesn't seem to be editable
+    if (pq('div')->hasClass('tgme_widget_message_poll_question') or pq('a')->hasClass('tgme_widget_message_via_bot'))
+        $checksum = '/00000000';
     else
-        $checksum = '/00000000'; 
+        $checksum = sprintf('/%08x', crc32(pq('.tgme_widget_message_bubble > div.tgme_widget_message_text')->html()));
 
     $titleprep = pq('.tgme_widget_message_bubble > div.tgme_widget_message_text')->html();
     $titleprep = preg_replace('`<br>`', "\n", $titleprep);

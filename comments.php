@@ -7,7 +7,7 @@ use \RSSWriter\Feed;
 use \RSSWriter\Channel;
 use \RSSWriter\Item;
 
-error_reporting(E_ALL);
+error_reporting(E_WARNING);
 require_once('./VK/VK.php');
 require_once('./VK/VKException.php');
 require_once('./config.php');
