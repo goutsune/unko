@@ -16,56 +16,36 @@ require_once('./VK/VKException.php');
 require_once('./config.php');
 
 try {
-	$domain   = isset($_GET['domain'])   ? $_GET['domain'] : NULL;
+	$domain   = isset($_GET['domain'])   ? $_GET['domain']   : NULL;
 	$owner_id = isset($_GET['owner_id']) ? $_GET['owner_id'] : NULL;
-	$count    = isset($_GET['count'])    ? $_GET['count']  : 50;
-	$nocopy   = isset($_GET['nocopy'])   ? $_GET['nocopy'] : false;
-	$offset   = isset($_GET['offset'])   ? $_GET['offset'] : 0;
+	$count    = isset($_GET['count'])    ? $_GET['count']    : 50;
+	$nocopy   = isset($_GET['nocopy'])   ? $_GET['nocopy']   : false;
+	$offset   = isset($_GET['offset'])   ? $_GET['offset']   : 0;
 	$comments = isset($_GET['comments']) ? $_GET['comments'] : false;
-    $watch    = isset($_GET['watch'])    ? $_GET['watch'] : false;
+    $watch    = isset($_GET['watch'])    ? $_GET['watch']    : false;
 	
 	$vk = new VK\VK($vk_config['app_id'], $vk_config['api_secret'], $vk_config['access_token']); // Use your app_id and api_secret
-    
-	$response = $vk->api('wall.get',
-    array(
-		'domain' => $domain,
-		'count' => '1',
-		'owner_id' => $owner_id,
-		'extended' => '1',
-		'offset' => $offset,
-        'v' => '5.67'
-	));
-	
-	if (isset($response['error'])) {
-		header('HTTP/1.1 403 Forbidden');
-        print_r($response);
-		exit(0);
-	}
-	
-	if (!isset($response['response']['items'])) {
-		header('HTTP/1.1 403 Forbidden');
-		exit(0);
-	}
-	
-	if (!isset($response['response']['groups'][0])) {
-		header('HTTP/1.1 403 Forbidden');
-		exit(0);
-	}
-    
-	date_default_timezone_set('UTC');
-	
-	do {
-		$groupinfo = $vk->api('groups.getById',
-        array(
-			'group_ids' => $response['response']['groups'][0]['id'],
-			'fields' => 'description,status',
-            'v' => '5.67'
-		));
-        
-		if (!isset($groupinfo['response'][0]['description']))
-			sleep(1);
 
-	} while (!isset($groupinfo['response'][0]['description']));
+	date_default_timezone_set('UTC');
+
+    if (isset($domain))
+        $group_id = $domain;
+    else
+        $group_id = -$owner_id;
+
+    $groupinfo = $vk->api('groups.getById',
+    array(
+        'group_ids' => $group_id,
+        'fields' => 'description,status',
+        'v' => '5.67'
+    ));
+    
+    if (!isset($groupinfo['response'][0]['description']))
+    {
+        header('HTTP/1.1 403 Forbidden');
+        var_dump($groupinfo);
+        exit(0);
+    }
 	
 	$feed = new Feed();
 	
@@ -108,7 +88,11 @@ try {
 			));
 
 			if (!isset($response['response']['items'][0]))
-				sleep(1);
+            {
+                header('HTTP/1.1 403 Forbidden');
+                var_dump($response);
+                exit(0);
+            }
 		} while (!isset($response['response']['items'][1]));
 		
 		for ($i = 1; $i <= count($response['response']['items']) - 1; $i++) {
@@ -131,7 +115,11 @@ try {
 					));
 					
 					if (!isset($copyinfo['response']))
-						sleep(1);
+                    {
+                        header('HTTP/1.1 403 Forbidden');
+                        var_dump($copyinfo);
+                        exit(0);
+                    }
 				} while (!isset($copyinfo['response']));
 				
 				
@@ -160,11 +148,10 @@ try {
 			$description = preg_replace('`^(<br/>|<hr/>)*`', '', $rawtext);
 			$description = preg_replace('`((?<!://)(vk.cc/[0-9A-Za-z]+))`', '<a href="https://$2">vk.cc</a>', $description);
 			$description = preg_replace('`((?<!")(https?|ftp)://([a-zA-Z._-]+?)/[a-zA-Z0-9?&_%.=/;\-]*)`', '<a href="$1">$3</a>', $description);
-			$description = preg_replace('`(?<![?/!.])#([^[:blank:],<]+)`', '<b>#$1</b> ', $description);
+			$description = preg_replace('`(?<![?/!.])#([^[:blank:],.<():\n\r]+)`', '<b>#$1</b> ', $description);
 			$description = preg_replace('`\[([0-9a-z_\-]+)\|([^]]+)\]`', '<a href="https://vk.com/$1">$2</a>', $description);
 			
 			$plist = 0;
-			$cover = 1;
 			
 			if (isset($post['attachments']))
 			foreach ($post['attachments'] as $attachment)
@@ -183,11 +170,8 @@ try {
 							$src = $attachment['photo']['photo_604'];
 						elseif (isset($attachment['photo']['photo_130']))
 							$src = $attachment['photo']['photo_130'];
-						if ($cover) {
-							$cover       = 0;
-							$description = "<img src='{$src}'/><br/>" . $description;
-						} else
-							$description .= "<br/><img src='{$src}'/>";
+
+							$description .= "<img src='{$src}'/>";
 						
 						break;
 					}
@@ -244,7 +228,7 @@ try {
 							));
 							
 							if (!isset($pages['response']['html']))
-								sleep(1);
+								sleep(5);
 						} while (!isset($pages['response']['html']));
 						
 						$tmphtml = $pages['response']['html'];
@@ -274,7 +258,7 @@ try {
 
 			if (!isset($title))
 			{
-				$titleprep = preg_replace('`#[^[:blank:],<]+|</?blockquote>|</?p.*?>|<a href=.+?>.+?</a>|</?img>|<img.+?/>`', ' ', $rawtext);
+				$titleprep = preg_replace('`(*UTF)\#[\p{L}_]+|</?blockquote>|</?p.*?>|<a href=.+?>.+?</a>|</?img>|<img.+?/>`', ' ', $rawtext);
 				$titleprep = preg_replace('`<br/?>|<hr/?>`', "\n", $titleprep);
 				$titleprep = preg_replace('`\[([0-9a-z]+)\|([^]]+)\]`', '$2', $titleprep);
 				$titleprep = preg_replace('`^ +`mu', '', $titleprep);
@@ -313,8 +297,8 @@ try {
 				$item -> comments("http://127.0.0.1:9000/comments.php?owner_id=-{$response['response']['groups'][0]['id']}&post_id={$post['id']}");
 			
 			unset($description);
-			
-			preg_match_all('`#\K([^[:blank:],.<]+)`', $rawtext, $matches);
+
+            preg_match_all('`#\K([^[:blank:],.<():\n\r]+)`', $rawtext, $matches);
 			
 			foreach ($matches[0] as $match)
 				$item->category($match);
