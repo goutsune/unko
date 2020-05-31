@@ -147,7 +147,7 @@ try {
 
 			$description = preg_replace('`^(<br/>|<hr/>)*`', '', $rawtext);
 			$description = preg_replace('`((?<!://)(vk.cc/[0-9A-Za-z]+))`', '<a href="https://$2">vk.cc</a>', $description);
-			$description = preg_replace('`((?<!")(https?|ftp)://([a-zA-Z._-]+?)/[a-zA-Z0-9?&_%.=/;\-]*)`', '<a href="$1">$3</a>', $description);
+			$description = preg_replace('`((?<!")(https?|ftp)://([a-zA-Z._-]+?)/[a-zA-Z0-9?&_%.=/;\-@]*)`', '<a href="$1">$3</a>', $description);
 			$description = preg_replace('`(?<![?/!.])#([^[:blank:],.<():\n\r]+)`', '<b>#$1</b> ', $description);
 			$description = preg_replace('`\[([0-9a-z_\-]+)\|([^]]+)\]`', '<a href="https://vk.com/$1">$2</a>', $description);
 			
@@ -258,7 +258,7 @@ try {
 
 			if (!isset($title))
 			{
-				$titleprep = preg_replace('`(*UTF)\#[\p{L}_]+|</?blockquote>|</?p.*?>|<a href=.+?>.+?</a>|</?img>|<img.+?/>`', ' ', $rawtext);
+				$titleprep = preg_replace('`(*UTF)\#[\p{L}_@]+|</?blockquote>|</?p.*?>|<a href=.+?>.+?</a>|</?img>|<img.+?/>`', ' ', $rawtext);
 				$titleprep = preg_replace('`<br/?>|<hr/?>`', "\n", $titleprep);
 				$titleprep = preg_replace('`\[([0-9a-z]+)\|([^]]+)\]`', '$2', $titleprep);
 				$titleprep = preg_replace('`^ +`mu', '', $titleprep);
@@ -298,7 +298,7 @@ try {
 			
 			unset($description);
 
-            preg_match_all('`#\K([^[:blank:],.<():\n\r]+)`', $rawtext, $matches);
+            preg_match_all('`#\K([^[:blank:],.<()@:\n\r]+)`', $rawtext, $matches);
 			
 			foreach ($matches[0] as $match)
 				$item->category($match);
