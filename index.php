@@ -94,45 +94,32 @@ try {
                 exit(0);
             }
 		} while (!isset($response['response']['items'][1]));
-		
+
+        foreach($response['response']['profiles'] as $profile)
+            $profiles[$profile['id']] = $profile['first_name'] . ' ' . $profile['last_name'];
+
+        foreach($response['response']['groups'] as $profile)
+            $profiles["-" . $profile['id']] = $profile['name'];
+        
 		for ($i = 1; $i <= count($response['response']['items']) - 1; $i++) {
 			$post = $response['response']['items'][$i];
 			if (isset($post['copy_history']) && $nocopy)
 				continue;
 
 			if (isset($post['copy_history'])) {
-				
-				if ($post['copy_history'][0]['owner_id'] < 0)
-					$gid = $post['copy_history'][0]['owner_id'] * -1;
-				else
-					$gid = $post['copy_history'][0]['owner_id'];
-				do {
-					$copyinfo = $vk->api('groups.getById',
-                    array(
-						'group_ids' => $gid,
-						'fields' => 'description,status',
-                        'v' => '5.67'
-					));
-					
-					if (!isset($copyinfo['response']))
-                    {
-                        header('HTTP/1.1 403 Forbidden');
-                        var_dump($copyinfo);
-                        exit(0);
-                    }
-				} while (!isset($copyinfo['response']));
-				
-				
-				$rawtext = "<a href=\"https://vk.com/wall{$post['copy_history'][0]['owner_id']}_{$post['copy_history'][0]['id']}\">{$copyinfo['response'][0]['name']}:</a>";
+
 				if (strcmp($post['text'], "") != 0)
-					$rawtext .= '<blockquote>' . $post['text'] . '</blockquote>';
+					$rawtext .= '<p style="white-space:pre-line;">' . $post['text'] . '</p>';
 				
 				if (isset($post['copy_history'][0]['text']))
-					$rawtext .= '<p style="white-space:pre-line;">' . $post['copy_history'][0]['text'] . '</p>';
+                {
+                    $rawtext .= "<a href=\"https://vk.com/wall{$post['copy_history'][0]['owner_id']}_{$post['copy_history'][0]['id']}\">{$profiles[$post['copy_history'][0]['owner_id']]}:</a>";
+					$rawtext .= '<blockquote style="white-space:pre-line;">' . $post['copy_history'][0]['text'] . '</blockquote>';
+                }
 				else
 					$rawtext .= "";
 
-                $post = $post['copy_history'][0]; //TODO: replace with proper recursive parsing
+                $post['attachments'] = (object)array_merge((array)$post['attachments'], (array)$post['copy_history'][0]['attachments']); //TODO: replace with proper recursive parsing
 			} else if (strcmp($post['text'], "") != 0)
 				$rawtext = '<p style="white-space:pre-line;">' . $post['text'] . '</p>';
 			else
@@ -146,8 +133,8 @@ try {
 			$item    = new Item();
 
 			$description = preg_replace('`^(<br/>|<hr/>)*`', '', $rawtext);
-			$description = preg_replace('`((?<!://)(vk.cc/[0-9A-Za-z]+))`', '<a href="https://$2">vk.cc</a>', $description);
-			$description = preg_replace('`((?<!")(https?|ftp)://([a-zA-Z._-]+?)/[a-zA-Z0-9?&_%.=/;\-@]*)`', '<a href="$1">$3</a>', $description);
+			$description = preg_replace('`((?<!://)(vk.cc/[0-9A-Za-z]+))`', '<a href="https://$2">$2</a>', $description);
+			$description = preg_replace('`((?<!")(https?|ftp)://([a-zA-Z._-]+?)/[a-zA-Z0-9?&_%.=/;\-@]*)`', '<a href="$1">$1</a>', $description);
 			$description = preg_replace('`(?<![?/!.])#([^[:blank:],.<():\n\r]+)`', '<b>#$1</b> ', $description);
 			$description = preg_replace('`\[([0-9a-z_\-]+)\|([^]]+)\]`', '<a href="https://vk.com/$1">$2</a>', $description);
 			
