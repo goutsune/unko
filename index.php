@@ -110,14 +110,11 @@ try {
 
 				if (strcmp($post['text'], "") != 0)
 					$rawtext .= '<p style="white-space:pre-line;">' . $post['text'] . '</p>';
-				
-				if (isset($post['copy_history'][0]['text']))
-                {
-                    $rawtext .= "<a href=\"https://vk.com/wall{$post['copy_history'][0]['owner_id']}_{$post['copy_history'][0]['id']}\">{$profiles[$post['copy_history'][0]['owner_id']]}:</a>";
+
+                $rawtext .= "<a href=\"https://vk.com/wall{$post['copy_history'][0]['owner_id']}_{$post['copy_history'][0]['id']}\">{$profiles[$post['copy_history'][0]['owner_id']]}:</a>";
+                
+				if (strcmp($post['copy_history'][0]['text'], "") != 0)
 					$rawtext .= '<blockquote style="white-space:pre-line;">' . $post['copy_history'][0]['text'] . '</blockquote>';
-                }
-				else
-					$rawtext .= "";
 
                 $post['attachments'] = (object)array_merge((array)$post['attachments'], (array)$post['copy_history'][0]['attachments']); //TODO: replace with proper recursive parsing
 			} else if (strcmp($post['text'], "") != 0)
@@ -245,7 +242,7 @@ try {
 
 			if (!isset($title))
 			{
-				$titleprep = preg_replace('`(*UTF)\#[\p{L}_@]+|</?blockquote>|</?p.*?>|<a href=.+?>.+?</a>|</?img>|<img.+?/>`', ' ', $rawtext);
+				$titleprep = preg_replace('`(*UTF) *\#[\p{L}_@]+ *|</?blockquote>|</?p.*?>|<a href=.+?>.+?</a>|</?img>|<img.+?/>`', ' ', $rawtext);
 				$titleprep = preg_replace('`<br/?>|<hr/?>`', "\n", $titleprep);
 				$titleprep = preg_replace('`\[([0-9a-z]+)\|([^]]+)\]`', '$2', $titleprep);
 				$titleprep = preg_replace('`^ +`mu', '', $titleprep);
@@ -256,7 +253,7 @@ try {
 					$title = $matches[0][0];
 				else
 				{
-					preg_match_all('/^([^.!?。…]{6,70})[.!?。…]|.{1,70}$|^.{1,70}\b/mu', $titleprep, $matches);
+					preg_match_all('/^([^.!?。…]{6,120})[.!?。…]|.{1,120}$|^.{1,120}\b/mu', $titleprep, $matches);
 					if (isset($matches[0][0]) && strlen($matches[0][0]) >= 3)
 						$title = $matches[0][0];
 					elseif (isset($matches[0][1]))
