@@ -36,6 +36,9 @@ do
     $blog = json_decode($page, true);
     $posts = (object)array_merge((array)$posts, (array)$blog['posts']);
 
+    if ($count > $blog['posts-total'])
+        $count = $blog['posts-total'];
+
     $offset += 50;
     $count  -= 50;
 } while ($count >= 50);
@@ -65,6 +68,7 @@ foreach($posts as $post)
             else
                 $item_title = $post["date"];
 
+            unset($image);
             if (empty($post['photos']))
                 $image = "<img src=\"{$post['photo-url-1280']}\" />";
             else foreach($post['photos'] as $photo)
@@ -127,6 +131,11 @@ foreach($posts as $post)
             $item_body  = "<p>{$post['quote-source']}</p><blockquote>{$post['quote-text']}</blockquote>";
         break;
 
+        case 'link':
+            $item_title = "<p>{$post['link-text']}</p>";
+            $item_body  = "<a href=\"{$post['link-url']}\">{$post['link-text']}</a>" . $post['link-description'];
+        break;
+
         case 'regular':
             $item_title = $post['regular-title'] ? $post['regular-title']
                                                  : $post["date"];
@@ -138,6 +147,9 @@ foreach($posts as $post)
             $item_body = "<b>Unknown post type: {$post['type']}</b>";
         break;
     }
+
+    if (strlen($item_title) > 120)
+        $item_title = mb_substr($item_title, 0, 120) . '…';
     
     $item = new Item();
 	$item
