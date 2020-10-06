@@ -111,18 +111,19 @@ try {
 				if (strcmp($post['text'], "") != 0)
 					$rawtext .= '<p style="white-space:pre-line;">' . $post['text'] . '</p>';
 
-                $rawtext .= "<a href=\"https://vk.com/wall{$post['copy_history'][0]['owner_id']}_{$post['copy_history'][0]['id']}\">{$profiles[$post['copy_history'][0]['owner_id']]}:</a>";
+				$rawtext .= "<a href=\"https://vk.com/wall{$post['copy_history'][0]['owner_id']}_{$post['copy_history'][0]['id']}\">{$profiles[$post['copy_history'][0]['owner_id']]}:</a>";
                 
 				if (strcmp($post['copy_history'][0]['text'], "") != 0)
 					$rawtext .= '<blockquote style="white-space:pre-line;">' . $post['copy_history'][0]['text'] . '</blockquote>';
 
-                $post['attachments'] = (object)array_merge((array)$post['attachments'], (array)$post['copy_history'][0]['attachments']); //TODO: replace with proper recursive parsing
+        $post['attachments'] = (object)array_merge((array)$post['attachments'],
+        											                     (array)$post['copy_history'][0]['attachments']); //TODO: replace with proper recursive parsing
 			} else if (strcmp($post['text'], "") != 0)
 				$rawtext = '<p style="white-space:pre-line;">' . $post['text'] . '</p>';
 			else
 				$rawtext = "";
 
-            $checksum = sprintf('/%08x', crc32($rawtext));
+      $checksum = sprintf('/%08x', crc32($rawtext));
             
 			$rawtext = preg_replace('`<br>`', '<br/>', $rawtext);
 			$rawtext = preg_replace('`<hr>`', '<hr/>', $rawtext);
@@ -133,7 +134,7 @@ try {
 			$description = preg_replace('`((?<!://)(vk.cc/[0-9A-Za-z]+))`', '<a href="https://$2">$2</a>', $description);
 			$description = preg_replace('`((?<!")(https?|ftp)://([a-zA-Z._-]+?)/[a-zA-Z0-9?&_%.=/;\-@]*)`', '<a href="$1">$1</a>', $description);
 			$description = preg_replace('`(?<![?/!.])#([^[:blank:],.<():\n\r]+)`', '<b>#$1</b> ', $description);
-			$description = preg_replace('`\[([0-9a-z_\-]+)\|([^]]+)\]`', '<a href="https://vk.com/$1">$2</a>', $description);
+			$description = preg_replace('`\[([0-9a-z_?=#:/-]+)\|([^]]+)\]`', '<a href="https://vk.com/$1">$2</a>', $description);
 			
 			$plist = 0;
 			
@@ -150,6 +151,8 @@ try {
 							$src = $attachment['photo']['photo_2560'];
 						elseif (isset($attachment['photo']['photo_1280']))
 							$src = $attachment['photo']['photo_1280'];
+						elseif (isset($attachment['photo']['photo_807']))
+							$src = $attachment['photo']['photo_604'];
 						elseif (isset($attachment['photo']['photo_604']))
 							$src = $attachment['photo']['photo_604'];
 						elseif (isset($attachment['photo']['photo_130']))
@@ -163,13 +166,14 @@ try {
 					case 'audio':
 					{
 						if ($plist == 0)
-							$description .= "<br/><a href=\"http://coropata:9000/m3u.php?post={$post['id']}&amp;owner_id={$post['from_id']}&amp;all=1\">Playlist</a> contents:";
+							if (isset($post['copy_history']))
+								$description .= "<br/><a href=\"http://coropata:9000/m3u.php?post={$post['copy_history'][0]['id']}&amp;owner_id={$post['copy_history'][0]['from_id']}&amp;all=1\">Playlist</a> contents:";
+							else
+								$description .= "<br/><a href=\"http://coropata:9000/m3u.php?post={$post['id']}&amp;owner_id={$post['from_id']}&amp;all=1\">Playlist</a> contents:";
 						
 						$plist = 1;
 						
 						$description .= "<br/>{$attachment['audio']['artist']} &ndash; {$attachment['audio']['title']}";
-						
-						//$item->enclosure(substr($attachment['audio']['url'], 0, strpos($attachment['audio']['url'], '?')), 0, 'audio/mpeg');
 						break;
 					}
 					
@@ -197,7 +201,7 @@ try {
         
 						$description .= "<p><a href='http://vk.com/video{$attachment['video']['owner_id']}_{$attachment['video']['id']}'><img src=\"{$img}\" /</a><br/>{$attachment['video']['title']}</p>";
 						if ($attachment['video']['description'] != "")
-							$description .= "<blockquote>{$attachment['video']['description']}</blockquote>";
+							$description .= "<blockquote style=\"white-space:pre-line;\">{$attachment['video']['description']}</blockquote>";
 						break;
 					}
 					
@@ -205,11 +209,11 @@ try {
 						do {
 							$pages = $vk->api('pages.get',
                             array(
-								'need_html' => '1',
-								'gid' => $attachment['page']['gid'],
-								'pid' => $attachment['page']['pid'],
-                                'v' => '5.67'
-							));
+															'need_html' => '1',
+															'gid' => $attachment['page']['gid'],
+															'pid' => $attachment['page']['pid'],
+															'v' => '5.67'
+														));
 							
 							if (!isset($pages['response']['html']))
 								sleep(5);
@@ -227,14 +231,14 @@ try {
 						break;
 					}
 
-                    case 'audio_playlist': {
-                        $description .= "<br/><a href=\"http://coropata:9000/m3u.php?album_id={$attachment['audio_playlist']['id']}&amp;owner_id={$post['from_id']}\">{$attachment['audio_playlist']['title']}:</a>";
+					case 'audio_playlist': {
+							$description .= "<br/><a href=\"http://coropata:9000/m3u.php?album_id={$attachment['audio_playlist']['id']}&amp;owner_id={$attachment['audio_playlist']['owner_id']}\">{$attachment['audio_playlist']['title']}:</a>";
 
-                        foreach($attachment['audio_playlist']['audios'] as $audio)
-                            $description .= "<br/>{$audio['artist']} &ndash; {$audio['title']}";
-                    }
+							foreach($attachment['audio_playlist']['audios'] as $audio)
+									$description .= "<br/>{$audio['artist']} &ndash; {$audio['title']}";
+					}
 				}
-            }
+      }
 			unset($attachment);
 			
 			if ($plist == 1)
@@ -242,10 +246,11 @@ try {
 
 			if (!isset($title))
 			{
-				$titleprep = preg_replace('`(*UTF) *\#[\p{L}_@]+ *|</?blockquote>|</?p.*?>|<a href=.+?>.+?</a>|</?img>|<img.+?/>`', ' ', $rawtext);
+				$titleprep = preg_replace('`(*UTF) *\#[\p{L}0-9_@]+(\n|\r\n| )*|</?blockquote.*?>|</?p.*?>|<a href=.+?>.+?</a>|</?img>|<img.+?/>`', ' ', $rawtext);
 				$titleprep = preg_replace('`<br/?>|<hr/?>`', "\n", $titleprep);
 				$titleprep = preg_replace('`\[([0-9a-z]+)\|([^]]+)\]`', '$2', $titleprep);
 				$titleprep = preg_replace('`^ +`mu', '', $titleprep);
+				$titleprep = preg_replace('` +`', ' ', $titleprep);
 				$titleprep = str_replace(" \n", "\n", $titleprep);
 				
 				preg_match_all('`(Alnum|Album|Title|Альбом|Название) ?: ?.+`', $titleprep, $matches);

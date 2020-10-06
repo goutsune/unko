@@ -54,13 +54,13 @@ try {
     foreach($response['response']['items'] as $post)
 	{
 		$item = new Item();
-		$description = preg_replace('`#([^[:blank:]<])+([[:blank:](<br>)])*`', '', $post['text']);
-		$description = preg_replace('`\[([0-9a-z]+)\|([^]]+)\]`', '<a href="https://vk.com/$1">$2</a>', $description);
-        $posts[$post['id']] = "<i>{$description}</i>";
-        $description = "<p style='white-space:pre-line;'>{$description}</p>";
 
-        if (isset($post['reply_to_comment']))
-            $description = $posts[$post['reply_to_comment']] . $description;
+		$description = preg_replace('`\[([0-9a-z]+)\|([^]]+)\]`', '<a href="https://vk.com/$1">$2</a>', $post['text']);
+		$posts[$post['id']] = "<i>{$description}</i>";
+		$description = "<p style='white-space:pre-line;'>{$description}</p>";
+
+		if (isset($post['reply_to_comment']))
+				$description = $posts[$post['reply_to_comment']] . $description;
 
 		if(isset($post['attachments']))
 		foreach($post['attachments'] as $attachment)
@@ -71,7 +71,9 @@ try {
 				{
 					$img = $attachment['photo']['photo_604'];
 
-					if     (isset($attachment['photo']['photo_1280']))
+					if     (isset($attachment['photo']['photo_2560']))
+						$src = $attachment['photo']['photo_2560'];
+					elseif (isset($attachment['photo']['photo_1280']))
 						$src = $attachment['photo']['photo_1280'];
 					elseif (isset($attachment['photo']['photo_807']))
 						$src = $attachment['photo']['photo_807'];
@@ -95,7 +97,10 @@ try {
 				}
 				case 'doc': 
 				{
-					$description .= "<br/><a href='{$attachment['doc']['url']}'>{$attachment['doc']['title']}</a>";
+					if ($attachment['doc']['ext'] == "gif" or $attachment['doc']['ext'] == "png" or $attachment['doc']['ext'] == "jpg")
+						$description .= "<br/><a href='{$attachment['doc']['url']}' alt='{$attachment['doc']['title']}'><img src='{$attachment['doc']['url']}' /></a>";
+					else
+						$description .= "<br/><a href='{$attachment['doc']['url']}' >{$attachment['doc']['title']}</a>";
 					$item->enclosure($attachment['doc']['url'], 0, 'application/octet-stream');
 					break;
 				}
