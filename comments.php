@@ -18,7 +18,7 @@ try {
 	$count    = isset($_GET['count'])    ? $_GET['count']    : 100;
 	$offset   = 0;
 
-	$vk = new VK\VK($vk_config['app_id'], $vk_config['api_secret'], 
+	$vk = new VK\VK($vk_config['app_id'], $vk_config['api_secret'],
 					$vk_config['access_token']); // Use your app_id and api_secret
 
 	date_default_timezone_set('UTC');
@@ -42,7 +42,7 @@ try {
 			'owner_id' => $owner_id,
 			'offset'   => $offset,
 			'sort'     => 'asc',
-			'v'        => '5.67',
+			'v'        => '5.81',
 			'extended' => '1'));
 
 	foreach($response['response']['profiles'] as $profile)
@@ -88,14 +88,14 @@ try {
 					$description .= "<br/><img src='{$attachment['sticker']['photo_64']}'/>";
 					break;
 				}
-				case 'audio': 
+				case 'audio':
 				{
 					$plist = 1;
 					$description .= "<p>{$attachment['audio']['artist']} — {$attachment['audio']['title']}</a></p>";
 					$item->enclosure(substr($attachment['audio']['url'], 0, strpos($attachment['audio']['url'], '?')), 0, 'audio/mpeg');
 					break;
 				}
-				case 'doc': 
+				case 'doc':
 				{
 					if ($attachment['doc']['ext'] == "gif" or $attachment['doc']['ext'] == "png" or $attachment['doc']['ext'] == "jpg")
 						$description .= "<br/><a href='{$attachment['doc']['url']}' alt='{$attachment['doc']['title']}'><img src='{$attachment['doc']['url']}' /></a>";
@@ -104,12 +104,12 @@ try {
 					$item->enclosure($attachment['doc']['url'], 0, 'application/octet-stream');
 					break;
 				}
-				case 'link': 
+				case 'link':
 				{
 					$description .= "<br/><a href='{$attachment['link']['url']}'>{$attachment['link']['title']}</a>";
 					break;
 				}
-				case 'video': 
+				case 'video':
 				{
 					$description .= "<br/><a href='http://vk.com/video{$attachment['video']['owner_id']}_{$attachment['video']['id']}'><img src='{$attachment['video']['photo_320']}'/></a>";
 					break;
@@ -138,9 +138,9 @@ try {
 	unset($match);
 	unset($titleprep);
 	unset($response);
-   
+
 	echo $feed;
-    
+
 } catch (VK\VKException $error)
 {
     echo $error->getMessage();
